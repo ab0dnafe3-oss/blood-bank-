@@ -1,0 +1,173 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل متبرع - بنك الدم الخيري</title>
+    <!-- استدعاء مكتبة Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            font-size: clamp(14px, 1.2vw, 16px); /* حجم خط متجاوب مع الشاشة */
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #d9534f;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: inherit;
+        }
+        button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #c9302c;
+        }
+        .nav-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .nav-link a {
+            color: #0275d8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .nav-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🩸 تسجيل متبرع جديد</h2>
+    <form id="donorForm">
+        <div class="form-group">
+            <label>الاسم الكامل:</label>
+            <input type="text" id="name" required placeholder="أدخل اسمك الكامل">
+        </div>
+        <div class="form-group">
+            <label>العمر:</label>
+            <input type="number" id="age" min="18" max="65" required placeholder="مثلاً: 25">
+        </div>
+        <div class="form-group">
+            <label>رقم الهاتف:</label>
+            <input type="tel" id="phone" required placeholder="07xxxxxxxx">
+        </div>
+        <div class="form-group">
+            <label>فصيلة الدم:</label>
+            <select id="bloodGroup" required>
+                <option value="">اختر الفصيلة</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>العنوان (الحي / المنطقة):</label>
+            <input type="text" id="address" required placeholder="مثلاً: المركز، حي الجامعة...">
+        </div>
+        <div class="form-group">
+            <label>تاريخ آخر تبرع (اختياري):</label>
+            <input type="date" id="lastDonation">
+        </div>
+        <button type="submit" id="submitBtn">تسجيل كمتبرع</button>
+    </form>
+
+    <div class="nav-link">
+        <a href="donors.html">📋 انتقل إلى صفحة عرض جميع المتبرعين (للابحث والاتصال)</a>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const donorForm = document.getElementById('donorForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    donorForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'جاري الحفظ...';
+
+        const newDonor = {
+            name: document.getElementById('name').value,
+            age: document.getElementById('age').value,
+            phone: document.getElementById('phone').value,
+            bloodGroup: document.getElementById('bloodGroup').value,
+            address: document.getElementById('address').value,
+            // إذا لم يتم إدخال تاريخ، يتم تسجيلها كـ "غير محدد"
+            lastDonation: document.getElementById('lastDonation').value || "غير محدد",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        db.collection("donors").add(newDonor)
+            .then(() => {
+                alert('تم تسجيل بياناتك بنجاح. شكراً لمبادرتك الإنسانية!');
+                donorForm.reset();
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'تسجيل كمتبرع';
+            })
+            .catch((error) => {
+                console.error("خطأ في الإضافة: ", error);
+                alert('حدث خطأ, حاول مرة أخرى.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'تسجيل كمتبرع';
+            });
+    });
+</script>
+
+</body>
+</html>
